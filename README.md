@@ -1,2 +1,2 @@
 # ProxY
-A HTTP proxy implementation in Python
+A Web proxy implementation in Python
