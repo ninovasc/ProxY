@@ -4,3 +4,8 @@
 *.iml
 
 \.idea/
+\log/
+\cache/
+*.json
+*.log
+*.sqlite

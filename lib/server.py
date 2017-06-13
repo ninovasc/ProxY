@@ -1,8 +1,9 @@
-import socket, sys
+import socket
+import sys
 from thread import *
 
-class Server:
 
+class Server:
     def __init__(self, _port):
         self.port = _port
         self.max_conn = 5  # max connections Queues To Hold
@@ -14,10 +15,10 @@ class Server:
             s.bind(('', self.port))  # bind socket for listen
             s.listen(self.max_conn)  # Start listen for incomming connections
 
-            print("Server Started Sucessfully [ %d ]\n" % (self.port))
+            print("ProxY Started Sucessfully [ %d ]\n" % self.port)
         except Exception, e:
             print e
-            print "Unable to inicialize server"
+            print "Unable to initialize server"
             sys.exit(2)
 
         while 1:
@@ -27,7 +28,7 @@ class Server:
                 start_new_thread(self.conn_string, (conn, data, addr))  # Start a Thread
             except KeyboardInterrupt:
                 s.close()
-                print "\nProxy Server Shutting Down ..."
+                print "\nProxY Shutting Down ..."
                 print "Bye, bye..."
                 sys.exit(1)
 
@@ -63,6 +64,7 @@ class Server:
 
             self.proxy_server(webserver, port, conn, data, addr)
         except Exception, e:
+            print e
             pass
 
     def proxy_server(self, webserver, port, conn, data, addr):
@@ -73,15 +75,16 @@ class Server:
             while 1:
                 # Read reply or data to from end webserver
                 reply = s.recv(self.buffer_size)
-                if (len(reply) > 0):
+                if len(reply) > 0:
+                    #insert cache here
                     conn.send(reply)  # send reply back to client
                     dar = float(len(reply))
                     dar = float(dar / 1024)
-                    dar = "%.3s" % (str(dar))
-                    dar = "%s KB" % (dar)
+                    dar = "%.3s" % str(dar)
+                    dar = "%s KB" % dar
                     print "Request Done: %s => %s <=" % (str(addr[0]), str(dar))
                 else:
-                    break # break connection if receive data fail
+                    break  # break connection if receive data fail
             s.close()
             conn.close()
 
