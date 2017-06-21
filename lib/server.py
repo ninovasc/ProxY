@@ -1,6 +1,8 @@
 import socket
 import sys
 from thread import *
+from lib.log import Log
+from lib.parser import Parser
 
 
 class Server:
@@ -36,6 +38,8 @@ class Server:
 
     def conn_string(self, conn, data, addr):
         # client browser request appears here
+        Log(data)
+        request, b =Parser().http_to_dict(data)
         try:
             first_line = data.split('\n')[0]
 
@@ -61,6 +65,7 @@ class Server:
                 # specific port
                 port = int((temp[(port_pos + 1):])[:webserver_pos - port_pos - 1])
                 webserver = temp[:port_pos]
+            # Parser().http_to_dict(data)
 
             self.proxy_server(webserver, port, conn, data, addr)
         except Exception, e:
@@ -74,15 +79,19 @@ class Server:
             s.send(data)
             while 1:
                 # Read reply or data to from end webserver
-                reply = s.recv(self.buffer_size)
+
+                reply = self.recvall(s) # s.recv(self.buffer_size)
+
                 if len(reply) > 0:
+                    # Parser().http_to_dict(reply)
+                    Log(reply)
                     #insert cache here
                     conn.send(reply)  # send reply back to client
-                    dar = float(len(reply))
-                    dar = float(dar / 1024)
-                    dar = "%.3s" % str(dar)
-                    dar = "%s KB" % dar
-                    print "Request Done: %s => %s <=" % (str(addr[0]), str(dar))
+                    # dar = float(len(reply))
+                    # dar = float(dar / 1024)
+                    # dar = "%.3s" % str(dar)
+                    # dar = "%s KB" % dar
+                    # print "Request Done: %s => %s <=" % (str(addr[0]), str(dar))
                 else:
                     break  # break connection if receive data fail
             s.close()
@@ -94,3 +103,23 @@ class Server:
             s.close()
             conn.close()
             sys.exit(1)
+
+    def recvall(self,sock):
+        BUFF_SIZE = 4096  # 4 KiB
+        data = ""
+        # while True:
+        part = sock.recv(BUFF_SIZE)
+        if part != '':
+            d, b=Parser().http_to_dict(part)
+            data+=part
+            part=sock.recv(int(d['Content-Length']))
+
+            # print part
+            data += part
+            print data
+                # if part < BUFF_SIZE:
+                    # either 0 or end of data
+                    # break
+            return data
+        else:
+            return data
