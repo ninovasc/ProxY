@@ -58,7 +58,7 @@ def create_config(_port, _file, _log_msg):
     config = os.path.join(os.getcwd(), _file)
     if not os.path.exists(config):
         jsonfile = open(_file, 'w')
-        json.dump({'port': str(_port)}, jsonfile)
+        json.dump({'port': str(_port), 'auto_increment_port': 'True'}, jsonfile)
         jsonfile.flush()
         jsonfile.close()
         Log(_log_msg)

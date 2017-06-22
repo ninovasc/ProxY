@@ -9,10 +9,10 @@ if __name__ == '__main__':
     try:
         setup=Setup()
         cfg=setup.config
-        msg = "ProxY port load from file, listening on "+ cfg['port']
+        msg = "ProxY port load from file, trying to listening on "+ cfg['port']
         Log(msg)
         print msg
-        server = Server(int(cfg['port']))
+        server = Server(int(cfg['port']), cfg['auto_increment_port'])
         server.start()
     except KeyboardInterrupt:
         print "\nUser Requested An Interrupt"
