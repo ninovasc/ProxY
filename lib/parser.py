@@ -1,3 +1,4 @@
+from log import Log
 class Parser:
     def __init__(self):
         pass
@@ -17,15 +18,25 @@ class Parser:
         first_line = lines[0].split(' ')
         d = {}
         if 'HTTP/' in first_line[0]:
-            d['type'] = 'response'
-            d['protocol'] = first_line[0]
-            d['status_code'] = first_line[1]
-            d['status_message'] = ' '.join(first_line[2:])
-        else:
-            d['type'] = 'request'
-            d['method'] = first_line[0]
-            d['path'] = first_line[1]
-            d['protocol'] = first_line[2]
+            try:
+                d['type'] = 'response'
+                d['protocol'] = first_line[0]
+                d['status_code'] = first_line[1]
+                d['status_message'] = ' '.join(first_line[2:])
+            except Exception, e:
+                Log('Parser Error - error on HTTP response: '+e.message)
+
+        else: # ('GET' or 'HEAD' or 'POST' or 'PUT' or 'DELETE' or 'CONNECT' or 'OPTIONS' or 'TRACE') in first_line[0]:
+            try:
+                d['type'] = 'request'
+                d['method'] = first_line[0]
+                d['path'] = first_line[1]
+                d['protocol'] = first_line[2]
+            except Exception, e:
+                Log('Parser Error - error on HTTP request: ' + e.message)
+        # else:
+        #     Log('Parser Error - on HTTP not response neither request.')
+        #     return None, None
 
         lines.pop(0)
         for l in lines:
@@ -34,10 +45,9 @@ class Parser:
             l = l.split(': ')
             d[l[0]] = ': '.join(l[1:])
 
-        print(d)
         return d, b
 
-    def dict_to_http(self, _dict):
+    def dict_to_http(self, _dict, _body):
 
         if _dict['type'] == 'response':
             s = ' '.join(_dict['protocol'], _dict['status_code'], _dict['status_message']) + '\r\n'
@@ -53,7 +63,9 @@ class Parser:
         _dict.pop('type')
 
         for k in _dict:
-            s = s + ': '.join(k, _dict[k]) + '\r\n'
+            s += ': '.join(k, _dict[k]) + '\r\n'
+
+        s += '\r\n' + _body
 
         return s
 

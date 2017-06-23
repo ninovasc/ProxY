@@ -41,9 +41,17 @@ def create_cache_db(_db_file, _log_msg):
         c = conn.cursor()
         sql = '''create table if not exists CACHE(
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    DATA BLOB,
-                    REQUISITION TEXT,
-                    VALIDITY TIMESTAMP);'''
+                    REQUEST_METHOD TEXT,
+                    REQUEST_PATH TEXT,
+                    REQUEST_PROTOCOL TEXT,
+                    REQUEST_HEADERS TEXT,
+                    REQUEST_BODY BLOB,
+                    RESPONSE_STATUS_CODE TEXT,
+                    RESPONSE_STATUS_MESSAGE TEXT,
+                    RESPONSE_PROTOCOL TEXT,
+                    RESPONSE_HEADERS TEXT,
+                    RESPONSE_BODY BLOB,
+                    CACHE_VALIDITY TEXT);'''
         c.execute(sql)
         conn.close()
         Log(_log_msg)

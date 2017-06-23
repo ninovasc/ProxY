@@ -19,13 +19,13 @@ class Server:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # inicialize Socket
                 s.bind(('', self.port))  # bind socket for listen
                 s.listen(self.max_conn)  # Start listen for incomming connections
-                msg = "ProxY Started Sucessfully [ %d ]\n" % self.port
+                msg = "ProxY Started Sucessfully [ %d ]" % self.port
                 Log(msg)
                 print msg
                 break
             except Exception, e:
                 print e
-                msg ="Unable to initialize server on [ %d ]\n" % self.port
+                msg ="Unable to initialize server on [ %d ]" % self.port
                 Log(msg)
                 print msg
                 if self.auto_increment_port == 'True':
@@ -52,7 +52,7 @@ class Server:
         # client browser request appears here
         # Log(data)
         request, b =Parser().http_to_dict(data)
-        has, cache = Cache().there_is_cache(request, b)
+        has, cache = Cache().there_is_cache(data)
 
         if not has:
             try:
@@ -83,6 +83,7 @@ class Server:
                 print e
                 pass
         else:
+            Log('Cache was used')
             conn.send(cache)
             conn.close()
 
