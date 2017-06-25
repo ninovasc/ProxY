@@ -141,6 +141,7 @@ class Server:
                     if self.do_cache:
                         Cache().store_cache(data, reply)
                     conn.send(reply)  # send reply back to client
+                    Log('response received!')
                 else:
                     break  # break connection if receive data fail
             s.close()
