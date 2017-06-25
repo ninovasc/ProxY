@@ -1,18 +1,39 @@
+# -*- coding: utf-8 -*-
+"""
+This module is the proxy server core, here the management of transmission flow is made. 
+"""
 import socket
 import sys
 from thread import *
+from lib.cache import Cache
 from lib.log import Log
 from lib.parser import Parser
-from lib.cache import Cache
+
+__docformat__ = 'reStructuredText'
+
 
 class Server:
-    def __init__(self, _port,_auto_increment_port):
+    """
+    The Server class has five attributes: 
+    
+    **port** - the server TCP port, brought from config.json file
+    **auto_increment_port** - if 'True' the application will try next free port if the **port** is in use
+    **do_cache** - if 'True' the application will try use cache
+    **max_conn** - the number of simultaneous connections
+    **buffer_size** used on receive method to control the TCP flow
+    """
+    def __init__(self, _port, _auto_increment_port, _cache):
+
         self.port = _port
-        self.auto_increment_port=_auto_increment_port
+        self.auto_increment_port = True if _auto_increment_port == 'True' else False
         self.max_conn = 5  # max connections Queues To Hold
-        self.buffer_size = 4096  # Max socket Buffer Size
+        self.buffer_size = 1000  # Max socket Buffer Size
+        self.do_cache = True if _cache == 'True' else False
 
     def start(self):
+        """
+        This method inicialize the server and start listening requests.
+        """
 
         while True:
             try:
@@ -25,18 +46,17 @@ class Server:
                 break
             except Exception, e:
                 print e
-                msg ="Unable to initialize server on [ %d ]" % self.port
+                msg = "Unable to initialize server on [ %d ]" % self.port
                 Log(msg)
                 print msg
-                if self.auto_increment_port == 'True':
-                    self.port+=1
+                if self.auto_increment_port:
+                    self.port += 1
                 else:
                     sys.exit(2)
 
         while 1:
             try:
-                conn, addr = s.accept()  # Accept Connection From Client Browser
-                # data = conn.recv(self.buffer_size)  # Receiver Client Data
+                conn, addr = s.accept()
                 data = self.recvall(conn)
                 start_new_thread(self.conn_string, (conn, data, addr))  # Start a Thread
             except KeyboardInterrupt:
@@ -47,12 +67,21 @@ class Server:
 
         s.close()
 
-
     def conn_string(self, conn, data, addr):
-        # client browser request appears here
-        # Log(data)
-        request, b =Parser().http_to_dict(data)
-        has, cache = Cache().there_is_cache(data)
+        """
+        This method is called when a request is received form server listening. This works de request message and
+        pass the message to receiver.
+        
+        :param conn: connection socket
+        :param data: request data 
+        :param addr: socket address
+        """
+        request, b = Parser().http_to_dict(data)
+        if self.do_cache:
+            has, cache = Cache().there_is_cache(data)
+        else:
+            has = False
+            cache = ''
 
         if not has:
             try:
@@ -87,22 +116,30 @@ class Server:
             conn.send(cache)
             conn.close()
 
-
-
     def proxy_server(self, webserver, port, conn, data, addr):
+        """
+        This method receive the request of **conn_string** method and sends to this destination. After receive
+        the response return this to client.
+        
+        :param webserver: host
+        :param port: hosts port
+        :param conn: connection socket
+        :param data: request (HTTP message)
+        :param addr: socket address
+        """
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((webserver, port))
             s.send(data)
             while 1:
-                # Read reply or data to from end webserver
 
-                reply = self.recvall(s) # s.recv(self.buffer_size)
+                reply = self.recvall(s)
 
                 if len(reply) > 0:
                     # Parser().http_to_dict(reply)
-                    #Log(reply)
-                    Cache().store_cache(data, reply)
+                    # Log(reply)
+                    if self.do_cache:
+                        Cache().store_cache(data, reply)
                     conn.send(reply)  # send reply back to client
                 else:
                     break  # break connection if receive data fail
@@ -116,7 +153,13 @@ class Server:
             conn.close()
             sys.exit(1)
 
-    def recvall_old(self,sock):
+    def recvall_old(self, sock):
+        """
+        Deprectaed method to receive data Based on **Contend-Length** HTTP header parameter.
+        
+        :param sock: socket
+        :return: received data
+        """
         data = ""
         # while True:
         part = sock.recv(self.buffer_size)
@@ -125,20 +168,25 @@ class Server:
             data += part
             part = sock.recv(int(d['Content-Length']))
             data += part
-                # if part < BUFF_SIZE:
-                    # either 0 or end of data
-                    # break
+            # if part < BUFF_SIZE:
+            # either 0 or end of data
+            # break
             return data
         else:
             return data
 
     def recvall(self, sock):
+        """
+        This method receive all data from TCP socke based on Server **bufer_size**.
+        
+        :param sock: socket
+        :return: received data
+        """
         data = ''
         while True:
             part = sock.recv(self.buffer_size)
             data += part
-            teste=len(part)
             if len(part) < self.buffer_size:
-                break;
+                break
 
         return data

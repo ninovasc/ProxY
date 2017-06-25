@@ -1,17 +1,36 @@
-import os
+# -*- coding: utf-8 -*-
+"""
+This module writes and reads the cache DB. This module does not stops the execution flow, any error
+on this is transparent for the application, only is make a log entry for errors.
+"""
 import sqlite3
 import json
 from log import Log
 from parser import Parser
-from time import gmtime, strftime, time
+from time import gmtime, time
+
+__docformat__ = 'reStructuredText'
 
 
 class Cache:
+    """
+    This class has two attributes:
+    
+    **conn** - is a connection with sqlite file
+    **cursor** - is a cursor for DB executions
+    """
     def __init__(self):
         self.conn = sqlite3.connect('cache.sqlite')
         self.cursor = self.conn.cursor()
 
     def store_cache(self, _request, _response):
+        """
+        Store caches in DB. Based on requests make an entry to cache. 
+        
+        :param _request: a raw HTTP request message 
+        :param _response: a raw HTTP response message
+        :return: the return is empty
+        """
         try:
             headers_request, body_request = Parser().http_to_dict(_request)
             headers_response, body_response = Parser().http_to_dict(_response)
@@ -79,6 +98,13 @@ class Cache:
             Log('Cache Error - on insert cache: ' + e.message)
 
     def there_is_cache(self, _request):
+        """
+        Verify if **has**, in DB, **cache**, and returns this two informations, based on
+        HTTP request.
+        
+        :param _request: a raw HTTP request message
+        :return: this method return two informations: the boolean **has**, if there is cache, and a data of **cache** 
+        """
         try:
             headers_request, body_request = Parser().http_to_dict(_request)
 
